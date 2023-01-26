@@ -6,7 +6,6 @@ import { UsersSerializer } from 'src/users/users.serializer';
 
 import { AuthService } from './auth.service';
 import { RequestUser } from './auth.types';
-import { cookiesNames } from './cookies.constants';
 import { Auth } from './decorators/auth.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -20,16 +19,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: LoginDto,
   ): Promise<SuccessResponse> {
-    const { token } = await this.authService.login(dto);
-
-    res.cookie(cookiesNames.token, token);
+    await this.authService.authorize(dto, res);
 
     return { success: true };
   }
 
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(cookiesNames.token);
+    this.authService.unauthorize(res);
 
     return { success: true };
   }

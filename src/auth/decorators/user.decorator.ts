@@ -1,9 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-
-import { RequestUser } from '../auth.types';
+import { Request } from 'express';
 
 export const User = createParamDecorator((_: any, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest();
+  const request: Request = ctx.switchToHttp().getRequest();
 
-  return request.user as RequestUser;
+  return request.user;
 });

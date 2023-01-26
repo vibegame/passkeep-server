@@ -1,11 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Response } from 'express';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
-import { JwtPayload } from './auth.types';
+import { Cookies } from './auth.constants';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SessionsService } from './sessions/sessions.service';
@@ -14,8 +13,6 @@ import { SessionsService } from './sessions/sessions.service';
 export class AuthService {
   constructor(
     private readonly userService: UsersService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly sessionService: SessionsService,
   ) {}
@@ -29,7 +26,19 @@ export class AuthService {
     return isValid;
   }
 
-  async login(dto: LoginDto) {
+  authorizeResponse(res: Response, data: { token: string }) {
+    res.cookie(Cookies.TOKEN, data.token);
+  }
+
+  unauthorizeResponse(res: Response) {
+    res.clearCookie(Cookies.TOKEN);
+  }
+
+  async unauthorize(res: Response) {
+    this.unauthorizeResponse(res);
+  }
+
+  async authorize(dto: LoginDto, res: Response) {
     const user = await this.prisma.user.findUnique({
       where: { username: dto.username },
     });
@@ -47,24 +56,16 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const expiresIn = dto.trustMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24;
-
     const session = await this.sessionService.create({
       userId: user.id,
-      expiresIn,
+      trust: dto.trustMe || false,
     });
 
-    const jwtPayload: JwtPayload = {
-      sessionId: session.id,
-      userId: user.id,
-    };
-
-    const token = this.jwtService.sign(jwtPayload, {
-      secret: this.configService.get('JWT_SECRET_KEY'),
-      expiresIn,
+    this.authorizeResponse(res, {
+      token: session.token,
     });
 
-    return { token };
+    return session;
   }
 
   async getProfile(email: string) {
