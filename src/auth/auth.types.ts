@@ -1,8 +1,4 @@
-import { User } from '@prisma/client';
+import { Session, User } from '@prisma/client';
 
 export type RequestUser = User;
-
-export interface JwtPayload {
-  userId: string;
-  sessionId: string;
-}
+export type RequestSession = Session;

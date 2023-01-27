@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -49,6 +50,10 @@ export class CluesController {
   ): Promise<CluesSerializer> {
     const clue = await this.cluesService.update(user.id, id, dto);
 
+    if (!clue) {
+      throw new NotFoundException();
+    }
+
     return new CluesSerializer(clue);
   }
 
@@ -58,7 +63,11 @@ export class CluesController {
     @User() user: RequestUser,
     @Param('id') id: string,
   ): Promise<SuccessResponse> {
-    await this.cluesService.delete(user.id, id);
+    const result = await this.cluesService.delete(user.id, id);
+
+    if (!result) {
+      throw new NotFoundException();
+    }
 
     return { success: true };
   }

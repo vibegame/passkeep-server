@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Clue, Field } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -42,13 +42,17 @@ export class CluesService {
     return clue;
   }
 
-  async update(userId: string, id: string, dto: UpdateClueDto): Promise<Clue> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateClueDto,
+  ): Promise<Clue | null> {
     const foundClue = await this.prisma.clue.findFirst({
       where: { id, userId },
     });
 
     if (!foundClue) {
-      throw new NotFoundException();
+      return null;
     }
 
     return await this.prisma.clue.update({
@@ -57,13 +61,13 @@ export class CluesService {
     });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<true | null> {
     const foundClue = await this.prisma.clue.findFirst({
       where: { id, userId },
     });
 
     if (!foundClue) {
-      throw new NotFoundException();
+      return null;
     }
 
     await this.prisma.$transaction([
@@ -73,5 +77,7 @@ export class CluesService {
         },
       }),
     ]);
+
+    return true;
   }
 }

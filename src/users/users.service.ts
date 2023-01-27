@@ -9,6 +9,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getHashPassword(password: string) {
+    const salt = await bcrypt.genSalt();
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    return hashPassword;
+  }
+
   async getUserById(id: string) {
     return this.prisma.user.findUnique({
       where: {
@@ -18,8 +25,8 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto): Promise<User> {
-    const salt = await bcrypt.genSalt();
-    const hashPassword = await bcrypt.hash(dto.password, salt);
+    const hashPassword = await this.getHashPassword(dto.password);
+
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,

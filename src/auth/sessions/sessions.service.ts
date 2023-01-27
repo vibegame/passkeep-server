@@ -7,6 +7,32 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class SessionsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAllUserSessions(userId: string) {
+    return this.prisma.session.findMany({
+      where: {
+        userId,
+      },
+    });
+  }
+
+  async expireAllUserSessions(userId: string) {
+    return this.prisma.session.updateMany({
+      where: { userId },
+      data: {
+        expiresIn: new Date(),
+      },
+    });
+  }
+
+  async expireSession(id: string) {
+    return this.prisma.session.update({
+      where: { id },
+      data: {
+        expiresIn: new Date(),
+      },
+    });
+  }
+
   async create({ userId, trust }: { userId: string; trust: boolean }) {
     const today = dayjs();
     const expiresIn = trust ? today.add(1, 'month') : today.add(1, 'hour');

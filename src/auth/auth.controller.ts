@@ -7,8 +7,10 @@ import { UsersSerializer } from 'src/users/users.serializer';
 import { AuthService } from './auth.service';
 import { RequestUser } from './auth.types';
 import { Auth } from './decorators/auth.decorator';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -34,7 +36,7 @@ export class AuthController {
   @Auth()
   @Get('me')
   async getProfile(@User() requestUser: RequestUser) {
-    const user = await this.authService.getProfile(requestUser.email);
+    const user = await this.authService.getProfile(requestUser.id);
 
     return user ? new UsersSerializer(user) : null;
   }
@@ -44,5 +46,19 @@ export class AuthController {
     const user = await this.authService.register(dto);
 
     return new UsersSerializer(user);
+  }
+
+  @Post('/forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto);
+
+    return { success: true };
+  }
+
+  @Post('/reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto);
+
+    return { success: true };
   }
 }
